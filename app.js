@@ -35,15 +35,16 @@ app.get('/',(req,res) =>{
 });
 
 
-const validateListing = (req,res,next) => {
-    let { error } = listing.Schema.validate(req.body);
-    if(error) {
-        let errMsg = error.details.map((el) => el.message).jion(",");
-        throw new ExpressError(400,errMsg); 
-        }else{
-            next();
-        }
+const validateListing = (req, res, next) => {
+    const { error } = listingSchema.validate(req.body); 
+    if (error) {
+        const errMsg = error.details.map(el => el.message).join(",");
+        throw new ExpressError(400, errMsg);
+    } else {
+        next();
+    }
 };
+
 
 const validateReview = (req,res,next) => {
     let { error } = reviewSchema.validate(req.body);
@@ -125,9 +126,9 @@ app.post("/listings/:id/reviews" ,validateReview, wrapAsync(async (req,res) => {
 // });
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack); 
-    res.render("error.ejs");
-    // res.status(500).send("Something went wrong!"); 
+    const { statusCode = 500 } = err;
+    if (!err.message) err.message = "Something went wrong!";
+    res.status(statusCode).render("error", { err });
 });
 
 app.listen(8080, ()=>{
