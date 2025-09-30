@@ -34,7 +34,7 @@ app.get('/',(req,res) =>{
     res.send('my name is afroz');
 });
 
-
+//Validate Listing
 const validateListing = (req, res, next) => {
     const { error } = listingSchema.validate(req.body); 
     if (error) {
@@ -45,7 +45,7 @@ const validateListing = (req, res, next) => {
     }
 };
 
-
+//Validate Review
 const validateReview = (req,res,next) => {
     let { error } = reviewSchema.validate(req.body);
     if(error) {
@@ -64,10 +64,10 @@ app.get("/listings", async (req,res) =>{
 app.get("/listings/new",(req,res)=>{
     res.render("listings/new");
 });
-
+//Show Route
 app.get("/listings/:id",async (req,res) => {
     let {id} = req.params;
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     res.render("listings/show.ejs",{ listing });
 });
 //create route
@@ -85,11 +85,29 @@ app.get("/listings/:id/edit", async (req, res) => {
     const listing = await Listing.findById(id);
     res.render("listings/edit", { listing });
 });
-app.put("/listings/:id",async(req,res) =>{
-    let {id} = req.params;
-  await Listing.findByIdAndUpdate(id,{...req.body.listing});
-  res.redirect("listings/");
+
+//Update Route
+app.put("/listings/:id", async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        // Validate ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).send("Invalid listing ID");
+        }
+
+        const updatedListing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
+
+        if (!updatedListing) {
+            return res.status(404).send("Listing not found");
+        }
+
+        res.redirect(`/listings/${updatedListing._id}`);
+    } catch (err) {
+        next(err);
+    }
 });
+
 
 app.delete("/listings/:id",async (req,res)=>{
     let {id} = req.params;
@@ -98,8 +116,7 @@ app.delete("/listings/:id",async (req,res)=>{
     res.redirect("/listings");
 });
 
-//Review
-//Post Route
+//Review Route
 app.post("/listings/:id/reviews" ,validateReview, wrapAsync(async (req,res) => {
     let listing = await Listing.findById(req.params.id);
     let newReview = new Review(req.body.review);
@@ -111,6 +128,18 @@ app.post("/listings/:id/reviews" ,validateReview, wrapAsync(async (req,res) => {
 
     res.redirect(`/listings/${listing._id}`);
 }));
+
+//Delete Review Route
+
+app.delete("/listings/:id/reviews/:reviewId", wrapAsync(async (req, res) => {
+    let { id, reviewId } = req.params;
+
+    await Listing.findByIdAndUpdate(id, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+
+    res.redirect(`/listings/${id}`);
+}));
+
 
 // app.get("/testListing",async (req,res) =>{
 //     let samplelisting = new Listing({
