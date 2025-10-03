@@ -12,6 +12,18 @@ const { listingSchema , reviewSchema} = require("./utils/schema.js");
 const Review = require ("./models/review.js");
 const listing = require("./routes/listings.js");
 const review = require("./routes/review.js")
+const session = require("express-session");
+const flash = require("connect-flash");
+
+
+const sessionOption = {
+    secret: "mysupersecretkey",resave: false,saveUninitialized: true,
+    cookie: {
+        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        httpOnly: true,
+    }
+};
 
 
 main().then(() =>{
@@ -36,6 +48,16 @@ app.use(express.static(path.join(__dirname,"/public")));
 app.get('/',(req,res) =>{
     res.send('my name is afroz');
 });
+
+
+app.use(session(sessionOption));
+app.use(flash());
+
+
+app.use((req,res,next)=>{
+    res.locals.success = req.flash("success");
+    res.locals.error = req.flash("error");
+})
 
 
 app.use("/listings",listing);

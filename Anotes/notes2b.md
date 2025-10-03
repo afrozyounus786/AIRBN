@@ -31,3 +31,18 @@ Used for targeted ads, analyzing site visits.
 3. Cookie Parser
 
 To send and use the cookie
+
+4. Signed cookie
+cookie can be manipulated easily by brower to avoid this we use signed cookie
+
+app.use(cookieparser("secret code"));
+
+app.get("/getsignedcookie",(req,res)=>{
+    res.cookie("made-in","India",{signed: true});
+    res.send("signed cookie send");
+})
+
+app.get("/verify",(req,res)=>{
+    console.log(req.signedCookies);
+    res.send("verified");
+})
