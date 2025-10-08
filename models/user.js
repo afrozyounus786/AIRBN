@@ -12,4 +12,4 @@ const userSchema = new Schema({
 
 userSchema.plugin(passportLocalMongoose);// the use of this plugin is it automatically add the username , hashing and salting
 
-module.exports = mongoose.model("user" , userSchema);
+module.exports = mongoose.model("User" , userSchema);
