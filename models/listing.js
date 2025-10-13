@@ -12,10 +12,9 @@ const ListingSchema = new Schema({
     
     description:String,
        image :{
-        default:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGLCWu_Ngs1sF8NJtZand5W1yArr7bPLgwZAyRDw1j0u5vUViklCnPXy9r6tXd633opFJQeQ&s",
-        type:String,
-        set : (v) => v ===""?"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRGLCWu_Ngs1sF8NJtZand5W1yArr7bPLgwZAyRDw1j0u5vUViklCnPXy9r6tXd633opFJQeQ&s":v,
-    },
+        url: String,
+        filename: String,
+       },
     price:Number,
     location:String,
     country:String,

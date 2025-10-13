@@ -1,94 +1,33 @@
 const express = require("express");
 const router = express.Router();
-const mongoose = require("mongoose");
-const MONGO_URL = "mongodb://127.0.0.1:27017/afroz";
-const Listing = require("../models/listing.js");
 const wrapAsync = require("../utils/wrapAsync.js");
-const ExpressError = require("../utils/ExpressError.js");
-const { listingSchema , reviewSchema} = require("../utils/schema.js");
-const {isLoggedIn, isOwner , validateListing} = require("../middleware.js");
+const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
+const multer = require('multer');
+const { storage } = require("../cloudConfig.js");
+const upload = multer({ storage });
+
+
+const listingController = require("../controllers/listings.js");
+
+router
+    .route("/")
+    .get(wrapAsync(listingController.index))//Index
+    .post(isLoggedIn, upload.single('listing[image]'), validateListing , wrapAsync(listingController.create))//Create
+    .delete(isLoggedIn, isOwner, listingController.delete);//Delete
+
+
+//New
+router.get("/new", isLoggedIn, listingController.new);
+
+router
+    .route("/:id")
+    .get(listingController.show)//Show Route
+    .put(isLoggedIn, isOwner, listingController.update);//Update
 
 
 
-
-
-router.get("/", async (req,res) =>{
-   const allListings = await Listing.find({});
-   res.render("listings/index",{allListings});
-});
-
-router.get("/new",isLoggedIn,(req,res)=>{
-    res.render("listings/new");
-});
-//Show Route
-router.get("/:id",async (req,res) => {
-    let {id} = req.params;
-    const listing = await Listing.findById(id).populate({path: "reviews",populate:{
-        path: "author"
-    }}).populate("owner");
-
-    if(!listing){
-       req.flash("error" , "Listing you requested does not existed"); 
-       res.redirect("/listings")
-    }
-    console.log(listing)
-    res.render("listings/show.ejs",{ listing });
-});
-//create route
-router.post("/",isLoggedIn , validateListing , wrapAsync(async (req, res, next) => {
-    let result = listingSchema.validate(req.body);
-    console.log(result);
-    const newListing = new Listing(req.body.listing);
-    newListing.owner = req.user._id;
-    await newListing.save();
-    req.flash("success" , "New Listing Created!");
-    res.redirect("/listings");
-}));
-
-router.get("/:id/edit",isLoggedIn,isOwner, async (req, res) => {
-    let { id } = req.params;
-    
-    const listing = await Listing.findById(id);
-
-    if(!listing){
-       req.flash("error" , "Listing you requested does not existed"); 
-       res.redirect("/listings")
-    }
-    
-    res.render("listings/edit", { listing });
-});
-
-//Update Route
-router.put("/:id",isLoggedIn, isOwner , async (req, res, next) => {
-    try {
-        const { id } = req.params; 
-        // Validate ObjectId
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).send("Invalid listing ID");
-        }
-
-        const updatedListing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
-
-        if (!updatedListing) {
-            return res.status(404).send("Listing not found");
-        }
-
-        req.flash("success" , "Listing Updated!");
-
-        res.redirect(`/listings/${updatedListing._id}`);
-    } catch (err) {
-        next(err);
-    }
-});
-
-
-router.delete("/:id",isLoggedIn, isOwner , async (req,res)=>{
-    let {id} = req.params;
-    let deletedListing = await Listing.findByIdAndDelete(id);
-    console.log(deletedListing);
-    req.flash("success" , "Listing Deleted!");
-    res.redirect("/listings");
-});
+//Edit
+router.get("/:id/edit", isLoggedIn, isOwner, listingController.edit);
 
 
 module.exports = router;

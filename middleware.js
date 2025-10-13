@@ -43,7 +43,6 @@ module.exports.isOwner = async (req, res, next) => {
     }
 };
 
-// ✅ Validate Listing using Joi schema
 module.exports.validateListing = (req, res, next) => {
     const { error } = listingSchema.validate(req.body);
     if (error) {
